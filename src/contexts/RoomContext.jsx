@@ -14,7 +14,7 @@ export default function RoomContextProvider({ children }) {
             {
                 credential: 'password',
                 username: 'username',
-                url: 'turn:192.168.1.93:3478',
+                url: 'turn:limitless-hollows-40808.herokuapp.com:3478',
             }
         ]
     }
