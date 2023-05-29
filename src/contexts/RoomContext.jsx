@@ -86,7 +86,7 @@ export default function RoomContextProvider({ children }) {
     **/
 
     function connectSocket() {
-        socketTemp = io("http://192.168.1.93:3000/stream")
+        socketTemp = io("https://limitless-hollows-40808.herokuapp.com/")
         socketTemp.on('connect', () => {
             console.log('Conectado a socket.io')
 
