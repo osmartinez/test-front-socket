@@ -14,7 +14,7 @@ export default function RoomContextProvider({ children }) {
             {
                 credential: 'password',
                 username: 'username',
-                url: 'turn:limitless-hollows-40808.herokuapp.com:3478',
+                url: 'turn:turn-back.azurewebsites.net',
             }
         ]
     }
@@ -86,7 +86,7 @@ export default function RoomContextProvider({ children }) {
     **/
 
     function connectSocket() {
-        socketTemp = io("https://limitless-hollows-40808.herokuapp.com/")
+        socketTemp = io("https://socket-back.azurewebsites.net/")
         socketTemp.on('connect', () => {
             console.log('Conectado a socket.io')
 
