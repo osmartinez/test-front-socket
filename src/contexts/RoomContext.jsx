@@ -12,7 +12,8 @@ export default function RoomContextProvider({ children }) {
 
         iceServers: [
             {
-       
+                credential: 'vidcallapi',
+                username: 'kier.vidcall',
                 url: 'turn:20.16.133.195',
             }
         ]
