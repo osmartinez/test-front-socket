@@ -258,8 +258,8 @@ export default function RoomContextProvider({ children }) {
                 case 'failed':
                     console.log(peers[partnerName])
                     console.log('peer connection failed: ', partnerName,d)
-                    peers[partnerName].restartIce()
-                    //closeVideo(partnerName);
+                    //peers[partnerName].restartIce()
+                    closeVideo(partnerName);
                     break;
 
                 case 'closed':
