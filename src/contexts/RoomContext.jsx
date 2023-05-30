@@ -12,8 +12,7 @@ export default function RoomContextProvider({ children }) {
 
         iceServers: [
             {
-                credential: '',
-                username: '',
+       
                 url: 'turn:20.16.133.195',
             }
         ]
