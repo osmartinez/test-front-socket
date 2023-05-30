@@ -12,9 +12,9 @@ export default function RoomContextProvider({ children }) {
 
         iceServers: [
             {
-                credential: 'password',
-                username: 'username',
-                url: 'turn:turn-back.azurewebsites.net',
+                credential: '',
+                username: '',
+                url: 'turn:20.16.133.195',
             }
         ]
     }
@@ -86,7 +86,7 @@ export default function RoomContextProvider({ children }) {
     **/
 
     function connectSocket() {
-        socketTemp = io("https://socket-back.azurewebsites.net/")
+        socketTemp = io("https://socket-back.azurewebsites.net")
         socketTemp.on('connect', () => {
             console.log('Conectado a socket.io')
 
