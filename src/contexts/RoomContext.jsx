@@ -8,13 +8,11 @@ export const RoomContext = createContext()
 export default function RoomContextProvider({ children }) {
 
     const iceServers = {
-        iceTransportPolicy: "relay",
-
         iceServers: [
             {
                 // credential: 'key2',
                 // username: 'username2',
-                url: 'stun:stun.terapialo.com',
+                url: 'stun:stun.terapialo.com:5349',
             }
         ]
     }
