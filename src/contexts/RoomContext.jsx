@@ -14,7 +14,7 @@ export default function RoomContextProvider({ children }) {
             {
                 credential: 'key2',
                 username: 'username2',
-                url: 'turn:20.16.133.195',
+                url: 'turn:turn.terapialo.com',
             }
         ]
     }
