@@ -12,9 +12,9 @@ export default function RoomContextProvider({ children }) {
 
         iceServers: [
             {
-                credential: 'key2',
-                username: 'username2',
-                url: 'turn:turn.terapialo.com:5349',
+                // credential: 'key2',
+                // username: 'username2',
+                url: 'stun:stun.terapialo.com',
             }
         ]
     }
