@@ -133,7 +133,7 @@ export default function RoomContextProvider({ children }) {
             case 'TOGGLE_MIC':
                 if(statecopy.myStream){
                     if (statecopy.myStream.getAudioTracks()[0].enabled) {
-                        statecopy.myStream.getVideoTracks()[0].enabled = false
+                        statecopy.myStream.getAudioTracks()[0].enabled = false
                         statecopy.isMicActive = false
                     }
                     else {
@@ -373,7 +373,6 @@ export default function RoomContextProvider({ children }) {
 
     function broadcastNewTracks(stream, type) {
         const track = type === "audio" ? stream.getAudioTracks()[0] : stream.getVideoTracks()[0]
-
         for (const key in peers) {
             if (peers[key]) {
                 replaceTrack(track, peers[key])
