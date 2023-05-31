@@ -26,7 +26,7 @@ export default function NavbarComponent() {
 
             <Navbar bg="primary" className="navbar-expand-lg">
                 <Container fluid >
-                    <Link className="navbar-brand text-white" to="/">Chat live</Link>
+                    <Link className="navbar-brand text-white" to="/">Live.js</Link>
 
                     {userId ? (<>
                         <Nav className="navbar-nav mx-auto mb-2 mb-lg-0">

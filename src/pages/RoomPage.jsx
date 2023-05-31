@@ -43,7 +43,7 @@ export default function RoomPage() {
                             </Row>
                         </Col>
 
-                        <Col md={3} className={`chat-col d-print-none mt-3 bg-dark ${isChatVisible ? 'chat-opened' : ''}`} id="chat-pane" >
+                        <Col md={3} className={`chat-col d-print-none mt-3 bg-dark ${isChatVisible ? 'chat-opened' : 'chat-closed'}`} id="chat-pane" >
                             <ChatComponent></ChatComponent>
                         </Col>
                     </Row>

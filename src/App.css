@@ -21,6 +21,14 @@
   -moz-transition: all 0.3s ease !important;
 }
 
+.chat-col.chat-closed {
+  display: none;
+  transition: all 0.3s ease !important;
+  -webkit-transition: all 0.3s ease !important;
+  -moz-transition: all 0.3s ease !important;
+}
+
+
 #chat-messages{
   height: 70vh;
   margin-bottom: 20px;
