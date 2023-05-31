@@ -24,10 +24,12 @@ export default function RoomContextProvider({ children }) {
         userId: null,
         roomId: null,
         chatHistory: [],
-        chatVisible: true,
         peerStreams: [],
         myStream: null,
         myScreen: null,
+        isCamActive: true,
+        isMicActive: true,
+        isChatVisible: true,
     }
 
     function reducer(state, action) {
@@ -70,7 +72,9 @@ export default function RoomContextProvider({ children }) {
                     statecopy.peerStreams = []
                     statecopy.myStream = null
                     statecopy.myScreen = null
-                    peers = {}
+                    Object.keys(peers).forEach(key=>{
+                        delete peers[key]
+                    })
                 }catch(error){
                     console.log(error)
                 }    
@@ -116,9 +120,12 @@ export default function RoomContextProvider({ children }) {
                 if (statecopy.myStream) {
                     if (statecopy.myStream.getVideoTracks()[0].enabled) {
                         statecopy.myStream.getVideoTracks()[0].enabled = false
+                        statecopy.isCamActive = false
         
                     } else {
                         statecopy.myStream.getVideoTracks()[0].enabled = true
+                        statecopy.isCamActive = true
+
                     }
                 }
             break
@@ -127,9 +134,11 @@ export default function RoomContextProvider({ children }) {
                 if(statecopy.myStream){
                     if (statecopy.myStream.getAudioTracks()[0].enabled) {
                         statecopy.myStream.getVideoTracks()[0].enabled = false
+                        statecopy.isMicActive = false
                     }
                     else {
                         statecopy.myStream.getAudioTracks()[0].enabled = true
+                        statecopy.isMicActive = true
                     }
                 }
                 
@@ -362,7 +371,7 @@ export default function RoomContextProvider({ children }) {
         sender ? sender.replaceTrack(stream) : ""
     }
 
-    function broadcastNewTracks(stream, type, mirrorMode = true) {
+    function broadcastNewTracks(stream, type) {
         const track = type === "audio" ? stream.getAudioTracks()[0] : stream.getVideoTracks()[0]
 
         for (const key in peers) {
@@ -406,6 +415,7 @@ export default function RoomContextProvider({ children }) {
         }
     }
 
+
     return (
         <RoomContext.Provider value={
             {
@@ -417,6 +427,8 @@ export default function RoomContextProvider({ children }) {
                 peerStreams: state.peerStreams,
                 myStream: state.myStream,
                 myScreen: state.myScreen,
+                isCamActive: state.isCamActive,
+                isMicActive: state.isMicActive,
 
                 login,
                 logout,
@@ -426,6 +438,7 @@ export default function RoomContextProvider({ children }) {
                 toggleChat,
                 toggleCam,
                 toggleMic,
+
             }}>
             {children}
         </RoomContext.Provider>
