@@ -18,9 +18,6 @@ export default function RoomContextProvider({ children }) {
     }
     let socketTemp = null
     const [socket, setSocket] = useState(null)
-    const localVideo = createRef(null);
-    const [screen, setScreen] = useState(null)
-    const [myStream, setMyStream] = useState(null)
 
 
     const INITIALSTATE = {
@@ -28,6 +25,9 @@ export default function RoomContextProvider({ children }) {
         roomId: null,
         chatHistory: [],
         chatVisible: true,
+        peerStreams: [],
+        myStream: null,
+        myScreen: null,
     }
 
     function reducer(state, action) {
@@ -54,6 +54,57 @@ export default function RoomContextProvider({ children }) {
             case 'TOGGLE_CHAT':
                 statecopy.chatVisible = !statecopy.chatVisible
                 break
+
+            case 'UPSERT_PEER_STREAM':
+                if (statecopy.peerStreams.find(x => x.partnerName === action.payload.partnerName)) {
+                    statecopy.peerStreams = (statecopy.peerStreams.map(x => {
+                        if (x.partnerName === action.payload.partnerName) {
+                            return action.payload
+                        }
+                        else {
+                            return x
+                        }
+                    }))
+                }
+                else {
+                    statecopy.peerStreams.push(action.payload)
+                }
+                break
+
+            case 'REMOVE_PEER_STREAM':
+                statecopy.peerStreams = statecopy.peerStreams.filter(x => x.partnerName !== action.payload)
+                break
+
+            case 'SET_MY_STREAM':
+                statecopy.myStream = action.payload
+            break
+
+            case 'SET_MY_SCREEN':
+                statecopy.myScreen = action.payload
+            break
+
+            case 'TOGGLE_CAM':
+                if (statecopy.myStream) {
+                    if (statecopy.myStream.getVideoTracks()[0].enabled) {
+                        statecopy.myStream.getVideoTracks()[0].enabled = false
+        
+                    } else {
+                        statecopy.myStream.getVideoTracks()[0].enabled = true
+                    }
+                }
+            break
+
+            case 'TOGGLE_MIC':
+                if(statecopy.myStream){
+                    if (statecopy.myStream.getAudioTracks()[0].enabled) {
+                        statecopy.myStream.getVideoTracks()[0].enabled = false
+                    }
+                    else {
+                        statecopy.myStream.getAudioTracks()[0].enabled = true
+                    }
+                }
+                
+            break
         }
 
         return statecopy
@@ -124,11 +175,7 @@ export default function RoomContextProvider({ children }) {
 
                     getFullUserMedia()
                         .then(async (stream) => {
-                            if (!localVideo.current) {
-                                runLocalVideo()
-                            }
-
-                            setMyStream(stream)
+                            dispatch({type:"SET_MY_STREAM",payload: stream})
 
                             stream.getTracks().forEach((track) => {
                                 peers[data.sender].addTrack(track, stream)
@@ -163,44 +210,30 @@ export default function RoomContextProvider({ children }) {
         });
     }
 
-    function runLocalVideo() {
-        if (localVideo.current) {
-            getFullUserMedia()
-                .then((mediaStream) => {
-                    localVideo.current.srcObject = mediaStream
-                    localVideo.current.onloadedmetadata = (e) => {
-                        localVideo.current.play()
-                    }
-                })
-        }
-
-    }
 
     function addPeer(createOffer, partnerName) {
-        console.log(partnerName,' conectado')
+        console.log(partnerName, ' conectado')
         // i add to the peers object a new key of partner name and create a new rtcpeerconnection as value
         peers[partnerName] = new RTCPeerConnection(iceServers)
 
-        if (screen && screen.getTracks().length) {
-            screen.getTracks().forEach((track) => {
+        if (state.myScreen && state.myScreen.getTracks().length) {
+            state.myScreen.getTracks().forEach((track) => {
                 peers[partnerName].addTrack(track, screen)
             })
         }
-        else if (myStream) {
-            myStream.getTracks().forEach((track) => {
-                peers[partnerName].addTrack(track, myStream)
+        else if (state.myStream) {
+            state.myStream.getTracks().forEach((track) => {
+                peers[partnerName].addTrack(track, state.myStream)
             })
         }
         else {
             getFullUserMedia()
                 .then((stream) => {
-                    setMyStream(stream)
+                    dispatch({type: "SET_MY_STREAM", payload: stream})
 
                     stream.getTracks().forEach((track) => {
                         peers[partnerName].addTrack(track, stream)
                     })
-
-                   setLocalStream(stream)
                 })
         }
 
@@ -218,37 +251,13 @@ export default function RoomContextProvider({ children }) {
 
         peers[partnerName].ontrack = (e) => {
             const str = e.streams[0]
-            console.log()
 
-            if (document.getElementById(`${partnerName}-video`)) {
-                document.getElementById(`${partnerName}-video`).srcObject = str;
-            }
-            else {
-                let newVid = document.createElement('video');
-
-                newVid.id = `${partnerName}-video`;
-                newVid.srcObject = str;
-                newVid.autoplay = true;
-                newVid.className = 'remote-video';
-
-                //video controls elements
-                let controlDiv = document.createElement('div');
-                controlDiv.className = 'remote-video-controls';
-                controlDiv.innerHTML = `<i class="fa fa-microphone text-white pr-3 mute-remote-mic" title="Mute"></i>
-                            <i class="fa fa-expand text-white expand-remote-video" title="Expand"></i>`;
-
-                //create a new div for card
-                let cardDiv = document.createElement('div');
-                cardDiv.className = 'card card-sm';
-                cardDiv.id = partnerName;
-                cardDiv.appendChild(newVid);
-                cardDiv.appendChild(controlDiv);
-
-                //put div in main-section elem
-                document.getElementById('videos').appendChild(cardDiv);
-                adjustVideoElemSize()
-            }
-
+            dispatch({
+                type: "UPSERT_PEER_STREAM", payload: {
+                    partnerName: partnerName,
+                    stream: str,
+                }
+            })
 
         }
 
@@ -257,7 +266,7 @@ export default function RoomContextProvider({ children }) {
                 case 'disconnected':
                 case 'failed':
                     console.log(peers[partnerName])
-                    console.log('peer connection failed: ', partnerName,d)
+                    console.log('peer connection failed: ', partnerName, d)
                     //peers[partnerName].restartIce()
                     closeVideo(partnerName);
                     break;
@@ -282,10 +291,7 @@ export default function RoomContextProvider({ children }) {
     }
 
     function closeVideo(partnerName) {
-        if (document.getElementById(partnerName)) {
-            document.getElementById(partnerName).remove();
-            adjustVideoElemSize();
-        }
+        dispatch({type: "REMOVE_PEER_STREAM", payload: partnerName})
     }
 
 
@@ -300,7 +306,8 @@ export default function RoomContextProvider({ children }) {
                 sampleRate: 44100,
             }
         }).then((stream) => {
-            setScreen(stream)
+            dispatch({type: "SET_MY_SCREEN", payload: stream})
+            //setScreen(stream)
 
             broadcastNewTracks(stream, 'video', false)
 
@@ -314,24 +321,19 @@ export default function RoomContextProvider({ children }) {
 
     function stopScreenSharing() {
         return new Promise((res, rej) => {
-            screen.getTracks().length ? screen.getTracks().forEach(track => track.stop()) : ""
+            if(state.myScreen){
+                state.myScreen.getTracks().length ? state.myScreen.getTracks().forEach(track => track.stop()) : ""
+            }
             res()
         }).then(() => {
-            setScreen(null)
-            broadcastNewTracks(myStream, 'video')
+            dispatch({type: "SET_MY_SCREEN", payload: null})
+           // setScreen(null)
+            broadcastNewTracks(state.myStream, 'video')
         }).catch((error) => {
             console.log('stopShareScreen error', error)
         })
     }
 
-
-
-    function setLocalStream(stream, mirrorMode = true) {
-        const localVidElem = document.getElementById('local');
-
-        localVidElem.srcObject = stream;
-        mirrorMode ? localVidElem.classList.add('mirror-mode') : localVidElem.classList.remove('mirror-mode');
-    }
 
     function replaceTrack(stream, recipientPeer) {
         const sender = recipientPeer.getSenders ? recipientPeer.getSenders().find(s => s.track && s.track.kind === stream.kind) : false
@@ -339,8 +341,6 @@ export default function RoomContextProvider({ children }) {
     }
 
     function broadcastNewTracks(stream, type, mirrorMode = true) {
-        setLocalStream(stream, mirrorMode)
-
         const track = type === "audio" ? stream.getAudioTracks()[0] : stream.getVideoTracks()[0]
 
         for (const key in peers) {
@@ -353,67 +353,32 @@ export default function RoomContextProvider({ children }) {
     function getAndSetUserStream() {
         getFullUserMedia()
             .then((stream) => {
-                setMyStream(stream)
-                setLocalStream(stream)
+                dispatch({type: "SET_MY_STREAM", payload: stream})
             })
             .catch((error) => {
                 console.log('getAndSetUserStream error', error)
             })
     }
 
-    function adjustVideoElemSize() {
-        let elem = document.getElementsByClassName('card');
-        let totalRemoteVideosDesktop = elem.length;
-        let newWidth = totalRemoteVideosDesktop <= 2 ? '50%' : (
-            totalRemoteVideosDesktop == 3 ? '33.33%' : (
-                totalRemoteVideosDesktop <= 8 ? '25%' : (
-                    totalRemoteVideosDesktop <= 15 ? '20%' : (
-                        totalRemoteVideosDesktop <= 18 ? '16%' : (
-                            totalRemoteVideosDesktop <= 23 ? '15%' : (
-                                totalRemoteVideosDesktop <= 32 ? '12%' : '10%'
-                            )
-                        )
-                    )
-                )
-            )
-        );
-
-
-        for (let i = 0; i < totalRemoteVideosDesktop; i++) {
-            elem[i].style.width = newWidth;
-        }
-    }
-
-
     function toggleChat() {
         dispatch({ type: 'TOGGLE_CHAT' })
     }
 
-    function toggleCam(){
-        if(myStream && myStream.getVideoTracks()[0].enabled){
-            myStream.getVideoTracks()[0].enabled =false
-        }
-        else{
-            myStream.getVideoTracks()[0].enabled = true
-        }
+    function toggleCam() {
+        dispatch({type: 'TOGGLE_CAM'})
 
-        broadcastNewTracks(myStream, "video")
+        broadcastNewTracks(state.myStream, "video")
     }
 
-    function toggleMic(){
-        if(myStream && myStream.getAudioTracks()[0].enabled){
-            myStream.getVideoTracks()[0].enabled =false
-        }
-        else{
-            myStream.getAudioTracks()[0].enabled = true
-        }
-
-        broadcastNewTracks(myStream, "audio")
+    function toggleMic() {
+       
+        dispatch({type: "TOGGLE_MIC"})
+        broadcastNewTracks(state.myStream, "audio")
     }
 
-    
+
     function toggleScreenSharing() {
-        if (screen && screen.getVideoTracks().length && screen.getVideoTracks()[0].readyState !== "ended") {
+        if (state.myScreen && state.myScreen.getVideoTracks().length && state.myScreen.getVideoTracks()[0].readyState !== "ended") {
             stopScreenSharing()
         }
         else {
@@ -428,13 +393,15 @@ export default function RoomContextProvider({ children }) {
                 roomId: state.roomId,
                 chatHistory: state.chatHistory,
                 socket: socket,
-                localVideo: localVideo,
                 isChatVisible: state.chatVisible,
+                peerStreams: state.peerStreams,
+                myStream: state.myStream,
+                myScreen: state.myScreen,
+
                 login,
                 logout,
                 addChatMessage,
                 connectSocket,
-                runLocalVideo,
                 toggleScreenSharing,
                 toggleChat,
                 toggleCam,
