@@ -27,7 +27,8 @@ export default function NavbarComponent() {
             <Navbar bg="primary" className="navbar-expand-lg">
                 <Container fluid >
                     <Link className="navbar-brand text-white" to="/">Chat live</Link>
-                  
+
+                    {userId ? (<>
                         <Nav className="navbar-nav mx-auto mb-2 mb-lg-0">
                             <NavItem className="mr-3">
                                 <Button onClick={toggleCam}>
@@ -65,14 +66,12 @@ export default function NavbarComponent() {
                                 </Button>
                             </NavItem>
                         </Nav>
-                        {
-                            userId ?
-                                <Button variant="danger" onClick={logout}>
-                                    <i className="fa fa-phone-slash text-white"></i>
-                                </Button>
-                                :
-                                ""
-                        }
+
+                        <Button variant="danger" onClick={logout}>
+                            <i className="fa fa-phone-slash text-white"></i>
+                        </Button>
+                    </>
+                    ) : ""}
                 </Container>
             </Navbar>
         </>
