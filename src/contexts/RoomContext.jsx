@@ -108,6 +108,15 @@ export default function RoomContextProvider({ children }) {
                 statecopy.peerStreams = statecopy.peerStreams.filter(x => x.partnerName !== action.payload)
                 break
 
+            case 'MUTE_PEER':
+                statecopy.peerStreams = statecopy.peerStreams.map(x=>{
+                    if(x.partnerName === action.payload){
+                        x.muted = !x.muted
+                    }
+                    return x
+                })
+            break
+
             case 'SET_MY_STREAM':
                 statecopy.myStream = action.payload
             break
@@ -292,6 +301,7 @@ export default function RoomContextProvider({ children }) {
                 type: "UPSERT_PEER_STREAM", payload: {
                     partnerName: partnerName,
                     stream: str,
+                    muted:false,
                 }
             })
 
@@ -414,6 +424,10 @@ export default function RoomContextProvider({ children }) {
         }
     }
 
+    function mutePeer(partnerName){
+        dispatch({type: "MUTE_PEER", payload: partnerName})
+    }
+
 
     return (
         <RoomContext.Provider value={
@@ -437,7 +451,7 @@ export default function RoomContextProvider({ children }) {
                 toggleChat,
                 toggleCam,
                 toggleMic,
-
+                mutePeer,
             }}>
             {children}
         </RoomContext.Provider>
