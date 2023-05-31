@@ -17,7 +17,7 @@ export default function LogoutPage() {
     }
     else {
         return <>
-            <h1>Por favor espere mientras cerramos su sesión...</h1>
+            <h1>We are closing your session, please wait...</h1>
         </>
     }
 

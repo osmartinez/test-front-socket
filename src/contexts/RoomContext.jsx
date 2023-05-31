@@ -45,6 +45,35 @@ export default function RoomContextProvider({ children }) {
             case 'DO_LOGOUT':
                 statecopy.userId = null
                 statecopy.roomId = null
+                try{
+                    if(statecopy.myStream){
+                        if( statecopy.myStream.getVideoTracks().length){
+                            statecopy.myStream.getVideoTracks().forEach(vt=>{
+                                vt.stop()
+                                vt.enabled = false
+                                vt = null
+                            })
+                        }
+                        if(statecopy.myStream.getAudioTracks().length){
+                            statecopy.myStream.getAudioTracks().forEach(at=>{
+                                at.stop()
+                                at.enabled = false
+                                at = null
+                            })
+                        }
+                    }
+
+                    if(socket){
+                        socket.close()
+                    }
+
+                    statecopy.peerStreams = []
+                    statecopy.myStream = null
+                    statecopy.myScreen = null
+                    peers = {}
+                }catch(error){
+                    console.log(error)
+                }    
                 break
 
             case 'ADD_CHAT_MESSAGE':
@@ -127,11 +156,11 @@ export default function RoomContextProvider({ children }) {
 
     /**
     1. cliente envia $suscribe con (room,socketId)
-    2. servidor propaga a la sala $new user con (socketId)
-    3. cliente escucha $new user con (socketId)
-    4. cliente envia $newUserStart con (to: socketId, sender: state.userId)
-    5. servidor propaga a data.to $newUserStart con (sender: data.sender)
-    6. cliente escucha $newUserStart
+    2. servidor propaga a la sala $new-user con (socketId)
+    3. cliente escucha $new-user con (socketId)
+    4. cliente envia $introduce-myself con (to: socketId, sender: state.userId)
+    5. servidor propaga a data.to $introduce-myself con (sender: data.sender)
+    6. cliente escucha $introduce-myself
     **/
 
     function connectSocket() {
@@ -230,7 +259,6 @@ export default function RoomContextProvider({ children }) {
             getFullUserMedia()
                 .then((stream) => {
                     dispatch({type: "SET_MY_STREAM", payload: stream})
-
                     stream.getTracks().forEach((track) => {
                         peers[partnerName].addTrack(track, stream)
                     })
@@ -251,7 +279,6 @@ export default function RoomContextProvider({ children }) {
 
         peers[partnerName].ontrack = (e) => {
             const str = e.streams[0]
-
             dispatch({
                 type: "UPSERT_PEER_STREAM", payload: {
                     partnerName: partnerName,
@@ -267,7 +294,6 @@ export default function RoomContextProvider({ children }) {
                 case 'failed':
                     console.log(peers[partnerName])
                     console.log('peer connection failed: ', partnerName, d)
-                    //peers[partnerName].restartIce()
                     closeVideo(partnerName);
                     break;
 
@@ -307,10 +333,7 @@ export default function RoomContextProvider({ children }) {
             }
         }).then((stream) => {
             dispatch({type: "SET_MY_SCREEN", payload: stream})
-            //setScreen(stream)
-
             broadcastNewTracks(stream, 'video', false)
-
             stream.getVideoTracks()[0].addEventListener('ended', () => {
                 stopScreenSharing()
             })
@@ -327,7 +350,6 @@ export default function RoomContextProvider({ children }) {
             res()
         }).then(() => {
             dispatch({type: "SET_MY_SCREEN", payload: null})
-           // setScreen(null)
             broadcastNewTracks(state.myStream, 'video')
         }).catch((error) => {
             console.log('stopShareScreen error', error)
@@ -366,12 +388,10 @@ export default function RoomContextProvider({ children }) {
 
     function toggleCam() {
         dispatch({type: 'TOGGLE_CAM'})
-
         broadcastNewTracks(state.myStream, "video")
     }
 
     function toggleMic() {
-       
         dispatch({type: "TOGGLE_MIC"})
         broadcastNewTracks(state.myStream, "audio")
     }
