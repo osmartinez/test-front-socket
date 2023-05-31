@@ -17,7 +17,7 @@ export default function PeerVideosComponent() {
             return (
                 <div style={{
                     width:
-                        peerStreams.length === 1 ? '90%' : (
+                        peerStreams.length === 1 ? '95%' : (
                             peerStreams.length <= 2 ? '50%' : (
                                 peerStreams.length == 3 ? '33.33%' : (
                                     peerStreams.length <= 8 ? '25%' : (
