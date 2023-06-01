@@ -47,17 +47,17 @@ export default function RoomContextProvider({ children }) {
             case 'DO_LOGOUT':
                 statecopy.userId = null
                 statecopy.roomId = null
-                try{
-                    if(statecopy.myStream){
-                        if( statecopy.myStream.getVideoTracks().length){
-                            statecopy.myStream.getVideoTracks().forEach(vt=>{
+                try {
+                    if (statecopy.myStream) {
+                        if (statecopy.myStream.getVideoTracks().length) {
+                            statecopy.myStream.getVideoTracks().forEach(vt => {
                                 vt.stop()
                                 vt.enabled = false
                                 vt = null
                             })
                         }
-                        if(statecopy.myStream.getAudioTracks().length){
-                            statecopy.myStream.getAudioTracks().forEach(at=>{
+                        if (statecopy.myStream.getAudioTracks().length) {
+                            statecopy.myStream.getAudioTracks().forEach(at => {
                                 at.stop()
                                 at.enabled = false
                                 at = null
@@ -65,19 +65,19 @@ export default function RoomContextProvider({ children }) {
                         }
                     }
 
-                    if(socket){
+                    if (socket) {
                         socket.close()
                     }
 
                     statecopy.peerStreams = []
                     statecopy.myStream = null
                     statecopy.myScreen = null
-                    Object.keys(peers).forEach(key=>{
+                    Object.keys(peers).forEach(key => {
                         delete peers[key]
                     })
-                }catch(error){
+                } catch (error) {
                     console.log(error)
-                }    
+                }
                 break
 
             case 'ADD_CHAT_MESSAGE':
@@ -109,38 +109,38 @@ export default function RoomContextProvider({ children }) {
                 break
 
             case 'MUTE_PEER':
-                statecopy.peerStreams = statecopy.peerStreams.map(x=>{
-                    if(x.partnerName === action.payload){
+                statecopy.peerStreams = statecopy.peerStreams.map(x => {
+                    if (x.partnerName === action.payload) {
                         x.muted = !x.muted
                     }
                     return x
                 })
-            break
+                break
 
             case 'SET_MY_STREAM':
                 statecopy.myStream = action.payload
-            break
+                break
 
             case 'SET_MY_SCREEN':
                 statecopy.myScreen = action.payload
-            break
+                break
 
             case 'TOGGLE_CAM':
                 if (statecopy.myStream) {
                     if (statecopy.myStream.getVideoTracks()[0].enabled) {
                         statecopy.myStream.getVideoTracks()[0].enabled = false
                         statecopy.isCamActive = false
-        
+
                     } else {
                         statecopy.myStream.getVideoTracks()[0].enabled = true
                         statecopy.isCamActive = true
 
                     }
                 }
-            break
+                break
 
             case 'TOGGLE_MIC':
-                if(statecopy.myStream){
+                if (statecopy.myStream) {
                     if (statecopy.myStream.getAudioTracks()[0].enabled) {
                         statecopy.myStream.getAudioTracks()[0].enabled = false
                         statecopy.isMicActive = false
@@ -150,8 +150,8 @@ export default function RoomContextProvider({ children }) {
                         statecopy.isMicActive = true
                     }
                 }
-                
-            break
+
+                break
         }
 
         return statecopy
@@ -217,27 +217,30 @@ export default function RoomContextProvider({ children }) {
             })
 
             socketTemp.on("sdp", async (data) => {
-                if (data && data.description && data.description.type === "offer") {
-                    await peers[data.sender].setRemoteDescription(new RTCSessionDescription(data.description)) 
+                if (data && data.description) {
+                    if (data.description.type === "offer") {
+                        await peers[data.sender].setRemoteDescription(new RTCSessionDescription(data.description))
 
-                    getFullUserMedia()
-                        .then(async (stream) => {
-                            dispatch({type:"SET_MY_STREAM",payload: stream})
+                        getFullUserMedia()
+                            .then(async (stream) => {
+                                dispatch({ type: "SET_MY_STREAM", payload: stream })
 
-                            stream.getTracks().forEach((track) => {
-                                peers[data.sender].addTrack(track, stream)
+                                stream.getTracks().forEach((track) => {
+                                    peers[data.sender].addTrack(track, stream)
+                                })
+
+                                const answer = await peers[data.sender].createAnswer()
+
+                                await peers[data.sender].setLocalDescription(answer)
+
+                                socketTemp.emit("sdp", { description: peers[data.sender].localDescription, to: data.sender, sender: state.userId })
                             })
-
-                            const answer = await peers[data.sender].createAnswer()
-
-                            await peers[data.sender].setLocalDescription(answer)
-
-                            socketTemp.emit("sdp", { description: peers[data.sender].localDescription, to: data.sender, sender: state.userId })
-                        })
-                        .catch(err => console.log(err))
-                } else if (data.description.type === 'answer') {
-                    await peers[data.sender].setRemoteDescription(new RTCSessionDescription(data.description));
+                            .catch(err => console.log(err))
+                    } else if (data.description.type === 'answer') {
+                        await peers[data.sender].setRemoteDescription(new RTCSessionDescription(data.description));
+                    }
                 }
+
             })
         })
         socketTemp.on('error', (err) => {
@@ -276,7 +279,7 @@ export default function RoomContextProvider({ children }) {
         else {
             getFullUserMedia()
                 .then((stream) => {
-                    dispatch({type: "SET_MY_STREAM", payload: stream})
+                    dispatch({ type: "SET_MY_STREAM", payload: stream })
                     stream.getTracks().forEach((track) => {
                         peers[partnerName].addTrack(track, stream)
                     })
@@ -301,7 +304,7 @@ export default function RoomContextProvider({ children }) {
                 type: "UPSERT_PEER_STREAM", payload: {
                     partnerName: partnerName,
                     stream: str,
-                    muted:false,
+                    muted: false,
                 }
             })
 
@@ -336,7 +339,7 @@ export default function RoomContextProvider({ children }) {
     }
 
     function closeVideo(partnerName) {
-        dispatch({type: "REMOVE_PEER_STREAM", payload: partnerName})
+        dispatch({ type: "REMOVE_PEER_STREAM", payload: partnerName })
     }
 
 
@@ -351,7 +354,7 @@ export default function RoomContextProvider({ children }) {
                 sampleRate: 44100,
             }
         }).then((stream) => {
-            dispatch({type: "SET_MY_SCREEN", payload: stream})
+            dispatch({ type: "SET_MY_SCREEN", payload: stream })
             broadcastNewTracks(stream, 'video')
             stream.getVideoTracks()[0].addEventListener('ended', () => {
                 stopScreenSharing()
@@ -363,12 +366,12 @@ export default function RoomContextProvider({ children }) {
 
     function stopScreenSharing() {
         return new Promise((res) => {
-            if(state.myScreen){
+            if (state.myScreen) {
                 state.myScreen.getTracks().length ? state.myScreen.getTracks().forEach(track => track.stop()) : ""
             }
             res()
         }).then(() => {
-            dispatch({type: "SET_MY_SCREEN", payload: null})
+            dispatch({ type: "SET_MY_SCREEN", payload: null })
             broadcastNewTracks(state.myStream, 'video')
         }).catch((error) => {
             console.log('stopShareScreen error', error)
@@ -393,7 +396,7 @@ export default function RoomContextProvider({ children }) {
     function getAndSetUserStream() {
         getFullUserMedia()
             .then((stream) => {
-                dispatch({type: "SET_MY_STREAM", payload: stream})
+                dispatch({ type: "SET_MY_STREAM", payload: stream })
             })
             .catch((error) => {
                 console.log('getAndSetUserStream error', error)
@@ -405,12 +408,12 @@ export default function RoomContextProvider({ children }) {
     }
 
     function toggleCam() {
-        dispatch({type: 'TOGGLE_CAM'})
+        dispatch({ type: 'TOGGLE_CAM' })
         broadcastNewTracks(state.myStream, "video")
     }
 
     function toggleMic() {
-        dispatch({type: "TOGGLE_MIC"})
+        dispatch({ type: "TOGGLE_MIC" })
         broadcastNewTracks(state.myStream, "audio")
     }
 
@@ -424,8 +427,8 @@ export default function RoomContextProvider({ children }) {
         }
     }
 
-    function mutePeer(partnerName){
-        dispatch({type: "MUTE_PEER", payload: partnerName})
+    function mutePeer(partnerName) {
+        dispatch({ type: "MUTE_PEER", payload: partnerName })
     }
 
 
