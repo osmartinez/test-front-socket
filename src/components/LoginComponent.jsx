@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { Alert, Button, Card, Col, Container, Form, Row } from "react-bootstrap";
+import {  Button, Card, Col, Container, Form, Row } from "react-bootstrap";
 import { RoomContext } from "../contexts/RoomContext";
 import { Navigate } from "react-router-dom";
 
@@ -7,9 +7,6 @@ export default function LoginComponent() {
 
     const [username, setUsername] = useState('')
     const { login, userId, roomId } = useContext(RoomContext)
-    const [infoMsg, setInfoMsg] = useState('')
-    const [errorMsg, setErrorMsg] = useState('')
-
 
     function tryLogin() {
         login(username)
@@ -34,12 +31,6 @@ export default function LoginComponent() {
                             <Row>
                                 <Col className="h2 mt-5 text-center">
                                     <Button disabled={!username} onClick={tryLogin}>Create room</Button>
-                                </Col>
-                            </Row>
-                            <Row>
-                                <Col>
-                                    {errorMsg ? <Alert variant="danger">posible error</Alert> : ""}
-                                    {infoMsg ? <Alert variant="info">posible info</Alert> : ""}
                                 </Col>
                             </Row>
                         </Container>

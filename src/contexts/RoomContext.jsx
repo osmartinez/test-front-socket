@@ -1,4 +1,4 @@
-import { createContext, useReducer, useState, createRef } from "react";
+import { createContext, useReducer, useState } from "react";
 import { io } from "https://cdn.socket.io/4.4.1/socket.io.esm.min.js";
 
 const peers = {}
@@ -362,7 +362,7 @@ export default function RoomContextProvider({ children }) {
     }
 
     function stopScreenSharing() {
-        return new Promise((res, rej) => {
+        return new Promise((res) => {
             if(state.myScreen){
                 state.myScreen.getTracks().length ? state.myScreen.getTracks().forEach(track => track.stop()) : ""
             }

@@ -7,10 +7,7 @@ export default function NavbarComponent() {
 
     const {
         userId,
-        roomId,
         logout,
-        runLocalVideo,
-        localVideo,
         toggleScreenSharing,
         toggleChat,
         toggleCam,

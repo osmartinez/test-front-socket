@@ -41,7 +41,7 @@ export default function ChatComponent() {
                         {
                             chatHistory.map((msg, idx) => {
                                 return (
-                                    <Row className={`mx-1 mb-2 ${msg.mode === "remote" ? "justify-content-start" : "justify-content-end"}`}>
+                                    <Row key={idx} className={`mx-1 mb-2 ${msg.mode === "remote" ? "justify-content-start" : "justify-content-end"}`}>
                                         <Col sm="10" className={`card chat-card msg ${msg.mode === "remote" ? "" : "bg-white"}`}>
                                             <div className="sender-info">{msg.mode} - {msg.data.msg}</div>
                                         </Col>
@@ -49,8 +49,6 @@ export default function ChatComponent() {
                                 )
                             })
                         }
-
-
                     </div>
                 </Col>
             </Row>
