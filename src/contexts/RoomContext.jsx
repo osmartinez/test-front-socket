@@ -217,7 +217,7 @@ export default function RoomContextProvider({ children }) {
             })
 
             socketTemp.on("sdp", async (data) => {
-                if (data.description && data.description.type === "offer") {
+                if (data && data.description && data.description.type === "offer") {
                     await peers[data.sender].setRemoteDescription(new RTCSessionDescription(data.description)) 
 
                     getFullUserMedia()
