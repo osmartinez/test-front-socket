@@ -217,8 +217,8 @@ export default function RoomContextProvider({ children }) {
             })
 
             socketTemp.on("sdp", async (data) => {
-                if (data.description.type === "offer") {
-                    data.description ? await peers[data.sender].setRemoteDescription(new RTCSessionDescription(data.description)) : ""
+                if (data.description && data.description.type === "offer") {
+                    await peers[data.sender].setRemoteDescription(new RTCSessionDescription(data.description)) 
 
                     getFullUserMedia()
                         .then(async (stream) => {
@@ -352,7 +352,7 @@ export default function RoomContextProvider({ children }) {
             }
         }).then((stream) => {
             dispatch({type: "SET_MY_SCREEN", payload: stream})
-            broadcastNewTracks(stream, 'video', false)
+            broadcastNewTracks(stream, 'video')
             stream.getVideoTracks()[0].addEventListener('ended', () => {
                 stopScreenSharing()
             })
