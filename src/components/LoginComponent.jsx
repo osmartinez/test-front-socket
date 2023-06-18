@@ -24,7 +24,7 @@ export default function LoginComponent() {
                             <Row className="justify-content-md-center">
                                 <Col md="auto">
                                     <Form.Group>
-                                        <Form.Control value={username} onChange={(e) => setUsername(e.target.value)} className="mt-5" placeholder="Tu nombre" type="text"></Form.Control>
+                                        <Form.Control value={username} onChange={(e) => setUsername(e.target.value)} className="mt-5" placeholder="Your nick" type="text"></Form.Control>
                                     </Form.Group>
                                 </Col>
                             </Row>
