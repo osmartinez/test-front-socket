@@ -27,6 +27,7 @@ export default function RoomContextProvider({ children }) {
         roomId: null,
         chatHistory: [],
         peerStreams: [],
+        unseenMessages: 0,
         myStream: null,
         myScreen: null,
         isCamActive: true,
@@ -85,10 +86,16 @@ export default function RoomContextProvider({ children }) {
 
             case 'ADD_CHAT_MESSAGE':
                 statecopy.chatHistory = [...state.chatHistory, action.payload]
+                if (action.payload.mode === "remote" && !statecopy.chatVisible) {
+                    statecopy.unseenMessages++
+                }
                 break
 
             case 'TOGGLE_CHAT':
                 statecopy.chatVisible = !statecopy.chatVisible
+                if (statecopy.chatVisible) {
+                    statecopy.unseenMessages = 0
+                }
                 break
 
             case 'UPSERT_PEER_STREAM':
@@ -156,9 +163,9 @@ export default function RoomContextProvider({ children }) {
 
                 break
 
-            case  'SET_RECORDING':
+            case 'SET_RECORDING':
                 statecopy.isRecording = action.payload
-            break
+                break
         }
 
         return statecopy
@@ -361,7 +368,7 @@ export default function RoomContextProvider({ children }) {
                 sampleRate: 44100,
             }
         })
-        
+
         media.then((stream) => {
             dispatch({ type: "SET_MY_SCREEN", payload: stream })
             broadcastNewTracks(stream, 'video')
@@ -442,52 +449,52 @@ export default function RoomContextProvider({ children }) {
         dispatch({ type: "MUTE_PEER", payload: partnerName })
     }
 
-    function saveRecordedStream(stream,user){
-        let blob = new Blob( stream, { type: 'video/webm' } );
+    function saveRecordedStream(stream, user) {
+        let blob = new Blob(stream, { type: 'video/webm' });
 
-        let file = new File( [blob], `${ user }-${ new Date().toLocaleTimeString() }-record.webm` );
+        let file = new File([blob], `${user}-${new Date().toLocaleTimeString()}-record.webm`);
 
-        saveAs( file );
-    } 
+        saveAs(file);
+    }
 
-    function startRecording(stream){
-        mediaRecorder = new MediaRecorder( stream, {
+    function startRecording(stream) {
+        mediaRecorder = new MediaRecorder(stream, {
             mimeType: 'video/webm;codecs=vp9'
-        } );
+        });
 
-        mediaRecorder.start( 1000 );
-        dispatch({type: "SET_RECORDING",payload: true})
+        mediaRecorder.start(1000);
+        dispatch({ type: "SET_RECORDING", payload: true })
 
-        mediaRecorder.ondataavailable = function ( e ) {
-            recordedStream.push( e.data );
+        mediaRecorder.ondataavailable = function (e) {
+            recordedStream.push(e.data);
         };
 
         mediaRecorder.onstop = function () {
-            dispatch({type: "SET_RECORDING",payload: false})
+            dispatch({ type: "SET_RECORDING", payload: false })
 
-            saveRecordedStream( recordedStream, state.userId );
+            saveRecordedStream(recordedStream, state.userId);
 
-            setTimeout( () => {
+            setTimeout(() => {
                 recordedStream = [];
-            }, 3000 );
+            }, 3000);
         };
 
-        mediaRecorder.onerror = function ( e ) {
-            console.error( e );
+        mediaRecorder.onerror = function (e) {
+            console.error(e);
         };
     }
 
-    function toggleRecording(){
-        if ( !mediaRecorder || mediaRecorder.state === 'inactive' ) {
+    function toggleRecording() {
+        if (!mediaRecorder || mediaRecorder.state === 'inactive') {
             return true
         }
 
-        else if ( mediaRecorder.state === 'paused' ) {
+        else if (mediaRecorder.state === 'paused') {
             mediaRecorder.resume();
             return false
         }
 
-        else if ( mediaRecorder.state === 'recording' ) {
+        else if (mediaRecorder.state === 'recording') {
             mediaRecorder.stop();
             return false
         }
@@ -505,10 +512,10 @@ export default function RoomContextProvider({ children }) {
             })
         }
 
-       
+
     }
 
-    function recordVideo(){
+    function recordVideo() {
         if (state.myStream && state.myStream.getTracks().length) {
             startRecording(state.myStream)
         }
@@ -535,6 +542,7 @@ export default function RoomContextProvider({ children }) {
                 isCamActive: state.isCamActive,
                 isMicActive: state.isMicActive,
                 isRecording: state.isRecording,
+                unseenMessages: state.unseenMessages,
 
                 login,
                 logout,
@@ -548,7 +556,7 @@ export default function RoomContextProvider({ children }) {
                 recordScreen,
                 recordVideo,
                 toggleRecording,
-                
+
             }}>
             {children}
         </RoomContext.Provider>

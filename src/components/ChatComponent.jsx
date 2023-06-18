@@ -43,7 +43,8 @@ export default function ChatComponent() {
                                 return (
                                     <Row key={idx} className={`mx-1 mb-2 ${msg.mode === "remote" ? "justify-content-start" : "justify-content-end"}`}>
                                         <Col sm="10" className={`card chat-card msg ${msg.mode === "remote" ? "" : "bg-white"}`}>
-                                            <div className="sender-info">{msg.mode} - {msg.data.msg}</div>
+                                            <div className="sender-info">{msg.mode === "local" ? "" : `${msg.data.sender}: `}
+                                                {msg.data.msg}</div>
                                         </Col>
                                     </Row>
                                 )

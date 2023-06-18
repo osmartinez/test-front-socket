@@ -18,6 +18,7 @@ export default function NavbarComponent() {
         recordScreen,
         toggleRecording,
         isRecording,
+        unseenMessages
     } = useContext(RoomContext)
 
     const [displayRecordingModal, setDisplayRecordingModal] = useState("none")
@@ -118,7 +119,7 @@ export default function NavbarComponent() {
                             </NavItem>
                             <NavItem>
                                 <Button onClick={toggleChat}>
-                                    <i className="fa fa-comment text-white mr-3"></i> <span className="badge badge-danger very-small font-weight-lighter" id='new-chat-notification' hidden>New</span>
+                                    <i className={`fa fa-comment text-${unseenMessages>0?'danger':'white'} mr-3`}></i>
                                 </Button>
                             </NavItem>
                         </Nav>
