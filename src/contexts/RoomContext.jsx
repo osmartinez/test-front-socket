@@ -2,6 +2,8 @@ import { createContext, useReducer, useState } from "react";
 import { io } from "https://cdn.socket.io/4.4.1/socket.io.esm.min.js";
 
 const peers = {}
+let mediaRecorder = null
+let recordedStream = []
 
 export const RoomContext = createContext()
 
@@ -30,6 +32,7 @@ export default function RoomContextProvider({ children }) {
         isCamActive: true,
         isMicActive: true,
         isChatVisible: true,
+        isRecording: false,
     }
 
     function reducer(state, action) {
@@ -152,6 +155,10 @@ export default function RoomContextProvider({ children }) {
                 }
 
                 break
+
+            case  'SET_RECORDING':
+                statecopy.isRecording = action.payload
+            break
         }
 
         return statecopy
@@ -344,7 +351,7 @@ export default function RoomContextProvider({ children }) {
 
 
     function startScreenSharing() {
-        navigator.mediaDevices.getDisplayMedia({
+        const media = navigator.mediaDevices.getDisplayMedia({
             video: {
                 cursor: "always",
             },
@@ -353,7 +360,9 @@ export default function RoomContextProvider({ children }) {
                 noiseSuppression: true,
                 sampleRate: 44100,
             }
-        }).then((stream) => {
+        })
+        
+        media.then((stream) => {
             dispatch({ type: "SET_MY_SCREEN", payload: stream })
             broadcastNewTracks(stream, 'video')
             stream.getVideoTracks()[0].addEventListener('ended', () => {
@@ -362,6 +371,8 @@ export default function RoomContextProvider({ children }) {
         }).catch((error) => {
             console.log('shareScreen error', error)
         })
+
+        return media
     }
 
     function stopScreenSharing() {
@@ -431,6 +442,84 @@ export default function RoomContextProvider({ children }) {
         dispatch({ type: "MUTE_PEER", payload: partnerName })
     }
 
+    function saveRecordedStream(stream,user){
+        let blob = new Blob( stream, { type: 'video/webm' } );
+
+        let file = new File( [blob], `${ user }-${ new Date().toLocaleTimeString() }-record.webm` );
+
+        saveAs( file );
+    } 
+
+    function startRecording(stream){
+        mediaRecorder = new MediaRecorder( stream, {
+            mimeType: 'video/webm;codecs=vp9'
+        } );
+
+        mediaRecorder.start( 1000 );
+        dispatch({type: "SET_RECORDING",payload: true})
+
+        mediaRecorder.ondataavailable = function ( e ) {
+            recordedStream.push( e.data );
+        };
+
+        mediaRecorder.onstop = function () {
+            dispatch({type: "SET_RECORDING",payload: false})
+
+            saveRecordedStream( recordedStream, state.userId );
+
+            setTimeout( () => {
+                recordedStream = [];
+            }, 3000 );
+        };
+
+        mediaRecorder.onerror = function ( e ) {
+            console.error( e );
+        };
+    }
+
+    function toggleRecording(){
+        if ( !mediaRecorder || mediaRecorder.state === 'inactive' ) {
+            return true
+        }
+
+        else if ( mediaRecorder.state === 'paused' ) {
+            mediaRecorder.resume();
+            return false
+        }
+
+        else if ( mediaRecorder.state === 'recording' ) {
+            mediaRecorder.stop();
+            return false
+        }
+    }
+
+    function recordScreen() {
+        if (state.myScreen && state.myScreen.getVideoTracks().length) {
+            startRecording(state.myScreen)
+        }
+        else {
+            startScreenSharing().then(videoStream => {
+                startRecording(videoStream)
+            }).catch((err) => {
+                console.log(err)
+            })
+        }
+
+       
+    }
+
+    function recordVideo(){
+        if (state.myStream && state.myStream.getTracks().length) {
+            startRecording(state.myStream)
+        }
+        else {
+            getFullUserMedia().then(videoStream => {
+                startRecording(videoStream)
+            }).catch((err) => {
+                console.log(err)
+            })
+        }
+    }
 
     return (
         <RoomContext.Provider value={
@@ -445,6 +534,7 @@ export default function RoomContextProvider({ children }) {
                 myScreen: state.myScreen,
                 isCamActive: state.isCamActive,
                 isMicActive: state.isMicActive,
+                isRecording: state.isRecording,
 
                 login,
                 logout,
@@ -455,6 +545,10 @@ export default function RoomContextProvider({ children }) {
                 toggleCam,
                 toggleMic,
                 mutePeer,
+                recordScreen,
+                recordVideo,
+                toggleRecording,
+                
             }}>
             {children}
         </RoomContext.Provider>
